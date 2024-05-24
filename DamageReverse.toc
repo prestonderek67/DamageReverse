@@ -1,0 +1,6 @@
+## Interface: 100207
+## Title: DamageReverse
+## Notes: Tracks damage done by party members...in reverse!.
+## Author: Derek Preston
+
+DamageReverse.lua
