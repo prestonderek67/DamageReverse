@@ -2,10 +2,11 @@
 
 -- Create the main frame for the addon
 local frame = CreateFrame("Frame", "DamageReverseFrame", UIParent)
-frame:SetSize(200, 200)  -- Increased height to fit more rows
+frame:SetSize(200, 200)  -- Initial size of the frame
 frame:SetPoint("CENTER")  -- Position on screen
 frame:EnableMouse(true)
 frame:SetMovable(true)
+frame:SetResizable(true)  -- Enable resizing
 frame:RegisterForDrag("LeftButton")
 frame:SetScript("OnDragStart", frame.StartMoving)
 frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
@@ -14,6 +15,26 @@ frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 frame.bg = frame:CreateTexture(nil, "BACKGROUND")
 frame.bg:SetAllPoints(true)
 frame.bg:SetColorTexture(0, 0, 0, 0.5)  -- Black with 50% opacity
+
+-- Create resize handle
+frame.resizeButton = CreateFrame("Button", nil, frame)
+frame.resizeButton:SetPoint("BOTTOMRIGHT")
+frame.resizeButton:SetSize(16, 16)
+
+-- Add a resize texture
+frame.resizeButton.texture = frame.resizeButton:CreateTexture(nil, "OVERLAY")
+frame.resizeButton.texture:SetTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+frame.resizeButton.texture:SetAllPoints(frame.resizeButton)
+
+-- Set resize scripts
+frame.resizeButton:SetScript("OnMouseDown", function(self, button)
+    if button == "LeftButton" then
+        frame:StartSizing("BOTTOMRIGHT")
+    end
+end)
+frame.resizeButton:SetScript("OnMouseUp", function(self, button)
+    frame:StopMovingOrSizing()
+end)
 
 -- Table to store damage data
 local damageData = {}
@@ -100,7 +121,7 @@ local function updateDpsRows()
         if not dpsRows[index] then
             -- Create a frame for the row
             local rowFrame = CreateFrame("Frame", nil, frame)
-            rowFrame:SetSize(180, 20)
+            rowFrame:SetSize(frame:GetWidth() - 20, 20)  -- Adjust width to frame width
             rowFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -30 - (index - 1) * 25)
 
             -- Create a border for the row frame
@@ -194,15 +215,16 @@ frame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
--- Slash command to display the frame (for testing purposes)
+-- Handle frame resizing
+frame:SetScript("OnSizeChanged", function(self, width, height)
+    for _, rowFrame in pairs(dpsRows) do
+        rowFrame:SetWidth(width - 20)  -- Adjust the width to match the frames width
+    end
+end)
+
+-- Slash command to display the frame for testing on first version
 SLASH_SHOWDPSMETER1 = "/showdpsmeter"
 SlashCmdList["SHOWDPSMETER"] = function()
     frame:Show()
     print("DPS Meter shown")
 end
-
-
-
-
-
-
