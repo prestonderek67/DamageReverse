@@ -81,98 +81,91 @@ local function getSortedDamageData()
     return sortedData
 end
 
--- Function to reverse the sorted damage data
-local function getReversedDamageData(sortedData)
-    local reversedData = {}
-    for i = #sortedData, 1, -1 do
-        table.insert(reversedData, sortedData[i])
-    end
-    return reversedData
-end
-
 -- Function to modify DPS values
 local function modifyDpsValues(sortedData)
-    local n = #sortedData
+    local maxDps = sortedData[1] and sortedData[1].dps or 0
     local modifiedData = {}
 
     for i, entry in ipairs(sortedData) do
-        modifiedData[i] = {name = entry.name, dps = sortedData[n - i + 1].dps}
+        modifiedData[i] = {name = entry.name, dps = maxDps - entry.dps}
     end
 
     return modifiedData
 end
 
+
 -- Create a function to update the DPS rows
-local function updateDpsRows()
-    local sortedData = getSortedDamageData()
-    local displayData
-
-    if frame.reverseCheckbox:GetChecked() then
-        displayData = modifyDpsValues(sortedData)
-    else
-        displayData = sortedData
-    end
-
-    local index = 1
-    for _, entry in ipairs(displayData) do
-        local name = entry.name
-        local dps = entry.dps
-
-        if not dpsRows[index] then
-            -- Create a frame for the row
-            local rowFrame = CreateFrame("Frame", nil, frame)
-            rowFrame:SetSize(frame:GetWidth() - 20, 20)  -- Adjust width to frame width
-            rowFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -30 - (index - 1) * 25)
-
-            -- Create a border for the row frame
-            local border = rowFrame:CreateTexture(nil, "BACKGROUND")
-            border:SetColorTexture(1, 1, 1, 1)  -- White border
-            border:SetPoint("TOPLEFT", -1, 1)
-            border:SetPoint("BOTTOMRIGHT", 1, -1)
-
-            -- Create a background for the row frame
-            rowFrame.bg = rowFrame:CreateTexture(nil, "BACKGROUND")
-            rowFrame.bg:SetAllPoints(true)
-            rowFrame.bg:SetColorTexture(0, 0, 0, 0.5)  -- Black with 50% opacity
-
-            -- Create a font string for the DPS text
-            rowFrame.text = rowFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-            rowFrame.text:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
-
-            -- Add mouse events for tooltip
-            rowFrame:SetScript("OnEnter", function(self)
-                if not frame.reverseCheckbox:GetChecked() then
-                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                    GameTooltip:SetText(name .. " Spell Details")
-                    if spellData[name] then
-                        for spellName, spellDamage in pairs(spellData[name]) do
-                            GameTooltip:AddLine(spellName .. ": " .. spellDamage)
-                        end
-                    end
-                    GameTooltip:Show()
-                end
-            end)
-            rowFrame:SetScript("OnLeave", function(self)
-                GameTooltip:Hide()
-            end)
-
-            dpsRows[index] = rowFrame
+    local function updateDpsRows()
+        local sortedData = getSortedDamageData()
+        local displayData
+    
+        if frame.reverseCheckbox:GetChecked() then
+            displayData = modifyDpsValues(sortedData)
+        else
+            displayData = sortedData
         end
-
-        dpsRows[index].text:SetText(name .. ": " .. string.format("%.2f", dps) .. " DPS")
-        dpsRows[index]:Show()
-        index = index + 1
+    
+        local index = 1
+        for _, entry in ipairs(displayData) do
+            local name = entry.name
+            local dps = entry.dps
+    
+            if not dpsRows[index] then
+                -- Create a frame for the row
+                local rowFrame = CreateFrame("Frame", nil, frame)
+                rowFrame:SetSize(frame:GetWidth() - 20, 20)  -- Adjust width to frame width
+                rowFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -30 - (index - 1) * 25)
+    
+                -- Create a border for the row frame
+                local border = rowFrame:CreateTexture(nil, "BACKGROUND")
+                border:SetColorTexture(1, 1, 1, 1)  -- White border
+                border:SetPoint("TOPLEFT", -1, 1)
+                border:SetPoint("BOTTOMRIGHT", 1, -1)
+    
+                -- Create a background for the row frame
+                rowFrame.bg = rowFrame:CreateTexture(nil, "BACKGROUND")
+                rowFrame.bg:SetAllPoints(true)
+                rowFrame.bg:SetColorTexture(0, 0, 0, 0.5)  -- Black with 50% opacity
+    
+                -- Create a font string for the DPS text
+                rowFrame.text = rowFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+                rowFrame.text:SetPoint("LEFT", rowFrame, "LEFT", 5, 0)
+    
+                -- Add mouse events for tooltip
+                rowFrame:SetScript("OnEnter", function(self)
+                    if not frame.reverseCheckbox:GetChecked() then
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                        GameTooltip:SetText(name .. " Spell Details")
+                        if spellData[name] then
+                            for spellName, spellDamage in pairs(spellData[name]) do
+                                GameTooltip:AddLine(spellName .. ": " .. spellDamage)
+                            end
+                        end
+                        GameTooltip:Show()
+                    end
+                end)
+                rowFrame:SetScript("OnLeave", function(self)
+                    GameTooltip:Hide()
+                end)
+    
+                dpsRows[index] = rowFrame
+            end
+    
+            dpsRows[index].text:SetText(name .. ": " .. string.format("%.2f", dps) .. " DPS")
+            dpsRows[index]:Show()
+            index = index + 1
+        end
+    
+        -- Hide unused rows
+        for i = index, #dpsRows do
+            dpsRows[i]:Hide()
+        end
     end
-
-    -- Hide unused rows
-    for i = index, #dpsRows do
-        dpsRows[i]:Hide()
-    end
-end
+    
 
 -- Create the checkbox
 frame.reverseCheckbox = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
-frame.reverseCheckbox:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -10)
+frame.reverseCheckbox:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
 frame.reverseCheckbox.text = frame.reverseCheckbox:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 frame.reverseCheckbox.text:SetPoint("LEFT", frame.reverseCheckbox, "RIGHT", 0, 1)
 frame.reverseCheckbox.text:SetText("Reverse DPS")
